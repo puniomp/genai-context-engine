@@ -14,6 +14,7 @@ The system demonstrates how modern AI platforms transform unstructured document 
 
 ```bash
 pip install -r requirements.txt
+```
 
 ### 2. Ingest sample documents
 
