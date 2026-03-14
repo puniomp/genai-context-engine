@@ -20,6 +20,7 @@ pip install -r requirements.txt
 
 python scripts/ingest_corpus.py
 
+```bash
 Example output:
 Document: sample_architecture
 chunks: 2
@@ -29,11 +30,16 @@ chunks: 2
 
 Total documents: 2
 Total chunks: 4
+```
 
 ### 3. Start the API server
+
+```bash
 PYTHONPATH=src uvicorn context_engine.api.main:app --reload
+```
 
 ### 4 Query the system
+```bash
 curl -X POST http://127.0.0.1:8000/query \
 -H "Content-Type: application/json" \
 -d '{"query":"What does this context engine do?","top_k":3}'
@@ -57,6 +63,7 @@ Example response:
   "top_k": 3,
   "sources": [...]
 }
+```
 
 # Design Goals
 
