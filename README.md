@@ -22,28 +22,7 @@ The architecture emphasizes several principles commonly required in production A
 
 The context engine follows a multi-stage pipeline similar to production AI systems.
 
-Document Sources
-      │
-      ▼
-Document Parser
-      │
-      ▼
-Token-Aware Chunker
-      │
-      ▼
-Embedding Generation
-      │
-      ▼
-Vector Index (Semantic Store)
-      │
-      ▼
-Semantic Retriever
-      │
-      ▼
-Context Builder
-      │
-      ▼
-LLM Inference
+Document Sources → Parser → Chunker → Embedding Generation → Vector Index → Semantic Retrieval → Context Builder → LLM Inference
 
 Each stage is implemented as a modular component to mirror real-world AI infrastructure pipelines.
 
