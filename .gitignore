@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.pyc
+
+# Virtual environment
+.venv/
+
+# Environment variables
+.env
+
+# macOS
+.DS_Store
+
+# Vector DB / artifacts
+data/processed/
