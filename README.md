@@ -131,98 +131,103 @@ Each stage is implemented as a modular component to mirror real-world AI infrast
 
 The context engine is composed of several modular subsystems:
 
-**Ingestion**
+### Ingestion
 Responsible for parsing raw documents and converting them into structured chunks suitable for semantic indexing.
 
-Files:
+&&File**
 src/context_engine/ingestion/parser.py
 src/context_engine/ingestion/chunker.py
 
-Capabilities:
-document parsing
-token-aware chunking
-metadata tracking
-chunk overlap support
+**Capabilities**
+- document parsing
+- token-aware chunking
+- metadata tracking
+- chunk overlap support
 
 **Embedding Layer**
 Transforms chunks into vector embeddings that capture semantic meaning.
 
-File:
+**File**
 src/context_engine/serving/embedding_client.py
 
-Embedding model used: 'text-embedding-3-small'
+**Embedding model**
+'text-embedding-3-small'
 
-**Semantic Store**
+### Semantic Store
 Maintains a persistent vector index supporting similarity search and metadata storage.
 
-File:
+**File**
 src/context_engine/memory/semantic_store.py
 
-Features:
-vector similarity search
-metadata storage
-persistent local index using Chroma
+***Features***
+- vector similarity search
+- metadata storage
+- persistent local index using Chroma
 
-**Retriever**
+### Retriever
 Performs semantic search over indexed embeddings to identify relevant knowledge.
 
-File:
+**File**
 src/context_engine/retrieval/semantic_retriever.py
 
-Capabilities:
-query embedding generation
-vector similarity search
-configurable top_k retrieval
+**Capabilities**
+- query embedding generation
+- vector similarity search
+- configurable top_k retrieval
 
-**Context Builder**
+### Context Builder
 Constructs token-bounded context windows optimized for LLM inference.
 
-File:
+**File**
 src/context_engine/orchestration/context_builder.py
 
-Responsibilities:
-token counting
-context packing
-prioritizing highest relevance chunks
-reserving tokens for model responses
+**Responsibilities**
+- token counting
+- context packing
+- prioritizing highest relevance chunks
+- reserving tokens for model responses
 
 **Answer Pipeline**
 Coordinates retrieval and generation.
 
-File:
+**File**
 src/context_engine/orchestration/answer_pipeline.py
 
-Responsibilities:
-semantic retrieval
-context construction
-prompt assembly
-LLM inference
-latency instrumentation
+**Responsibilities**
+- semantic retrieval
+- context construction
+- prompt assembly
+- LLM inference
+- latency instrumentation
 
-**Serving Layer**
+### Serving Layer
 Provides model interaction interfaces.
 
-Files:
+**Files**
 src/context_engine/serving/embedding_client.py
 src/context_engine/serving/llm_client.py
 
-**API Layer**
+---
+### API Layer
 Exposes the system as a service.
 
-File: src/context_engine/api/main.py
+**File**
+src/context_engine/api/main.py
 
-Endpoints:
+**Endpoints**
 GET  /health
 POST /query
 
-**Observability**
+---
+
+### Observability
 Instrumentation for debugging and performance analysis.
 
-Files:
+**Files**
 src/context_engine/observability/logging.py
 src/context_engine/observability/timing.py
 
-Captured metrics include:
+**Captured metrics**
 - retrieval latency
 - context construction latency
 - generation latency
@@ -235,6 +240,7 @@ File:
 src/context_engine/evaluation/eval_runner.py
 
 Run evaluation:
+```bash
 PYTHONPATH=src python src/context_engine/evaluation/eval_runner.py
 
 Example output:
@@ -248,6 +254,7 @@ Query: How are documents retrieved?
 Score: 1.0
 
 Average score: 0.78
+```
 
 This allows developers to detect regressions when modifying the retrieval or generation pipeline.
 
