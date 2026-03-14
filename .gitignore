@@ -13,3 +13,4 @@ __pycache__/
 
 # Vector DB / artifacts
 data/processed/
+.env
