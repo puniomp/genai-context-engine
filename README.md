@@ -211,8 +211,6 @@ tests/
 
     Unit and integration tests for core pipeline components
 
----
-
 # Upcoming Milestones
 
 ## Milestone 2 — Retrieval-Augmented Generation
@@ -224,7 +222,6 @@ Planned additions:
 - retrieval + generation orchestration
 - answer pipeline implementation
 
----
 
 ## Milestone 3 — API Serving Layer
 
@@ -237,8 +234,6 @@ Planned features:
 - structured response objects
 - streaming responses
 
----
-
 ## Milestone 4 — Observability
 
 Production systems require deep visibility into model behavior.
@@ -250,8 +245,6 @@ Planned features:
 - token usage monitoring
 - query tracing
 
----
-
 ## Milestone 5 — Production Optimizations
 
 Potential improvements:
@@ -261,7 +254,6 @@ Potential improvements:
 - caching layers
 - distributed ingestion pipelines
 
----
 # Motivation
 
 Large language models operate under strict context window constraints and cannot directly reason over large knowledge corpora.
@@ -281,7 +273,6 @@ These patterns underpin many modern AI platforms including:
 • research copilots  
 • domain-specific AI agents
 
----
 
 # Development Roadmap
 
