@@ -8,6 +8,55 @@ The system demonstrates how modern AI platforms transform unstructured document 
 
 ---
 
+# Quick Start
+
+### 1. Install dependencies
+
+```bash
+pip install -r requirements.txt
+
+### 2. Ingest sample documents
+
+python scripts/ingest_corpus.py
+
+Example output:
+Document: sample_architecture
+chunks: 2
+
+Document: sample_policy
+chunks: 2
+
+Total documents: 2
+Total chunks: 4
+
+### 3. Start the API server
+PYTHONPATH=src uvicorn context_engine.api.main:app --reload
+
+### 4 Query the system
+curl -X POST http://127.0.0.1:8000/query \
+-H "Content-Type: application/json" \
+-d '{"query":"What does this context engine do?","top_k":3}'
+
+Example response:
+{
+  "query": "What does this context engine do?",
+  "answer": "...",
+  "retrieved_chunks": 3,
+  "context_metrics": {
+    "available_context_tokens": 2200,
+    "used_context_tokens": 901,
+    "included_chunk_count": 3
+  },
+  "latency_ms": {
+    "retrieval": 670,
+    "context_build": 28,
+    "generation": 4474,
+    "total": 5172
+  },
+  "top_k": 3,
+  "sources": [...]
+}
+
 # Design Goals
 
 The architecture emphasizes several principles commonly required in production AI systems:
@@ -18,11 +67,55 @@ The architecture emphasizes several principles commonly required in production A
 • Observability hooks for performance and retrieval diagnostics  
 • Compatibility with multiple embedding and model providers
 
-# Architecture Overview
+# System Architecture
 
 The context engine follows a multi-stage pipeline similar to production AI systems.
 
-Document Sources → Parser → Chunker → Embedding Generation → Vector Index → Semantic Retrieval → Context Builder → LLM Inference
+          +------------------+
+          |  Document Corpus |
+          +--------+---------+
+                   |
+                   v
+            +------+------+
+            |   Parser    |
+            +------+------+
+                   |
+                   v
+            +------+------+
+            |  Chunker    |
+            +------+------+
+                   |
+                   v
+            +------+------+
+            | Embeddings  |
+            +------+------+
+                   |
+                   v
+            +------+------+
+            | Vector Store|
+            +------+------+
+                   |
+                   v
+            +------+------+
+            |  Retriever  |
+            +------+------+
+                   |
+                   v
+            +------+------+
+            | Context     |
+            | Builder     |
+            +------+------+
+                   |
+                   v
+            +------+------+
+            |   LLM       |
+            +------+------+
+                   |
+                   v
+             +-----+-----+
+             |  FastAPI  |
+             |  /query   |
+             +-----------+
 
 Each stage is implemented as a modular component to mirror real-world AI infrastructure pipelines.
 
@@ -33,144 +126,126 @@ The context engine is composed of several modular subsystems:
 **Ingestion**
 Responsible for parsing raw documents and converting them into structured chunks suitable for semantic indexing.
 
+Files:
+src/context_engine/ingestion/parser.py
+src/context_engine/ingestion/chunker.py
+
+Capabilities:
+document parsing
+token-aware chunking
+metadata tracking
+chunk overlap support
+
 **Embedding Layer**
 Transforms chunks into vector embeddings that capture semantic meaning.
+
+File:
+src/context_engine/serving/embedding_client.py
+
+Embedding model used: 'text-embedding-3-small'
 
 **Semantic Store**
 Maintains a persistent vector index supporting similarity search and metadata storage.
 
+File:
+src/context_engine/memory/semantic_store.py
+
+Features:
+vector similarity search
+metadata storage
+persistent local index using Chroma
+
 **Retriever**
 Performs semantic search over indexed embeddings to identify relevant knowledge.
+
+File:
+src/context_engine/retrieval/semantic_retriever.py
+
+Capabilities:
+query embedding generation
+vector similarity search
+configurable top_k retrieval
 
 **Context Builder**
 Constructs token-bounded context windows optimized for LLM inference.
 
-**Serving Layer (Upcoming)**
-Exposes the system as an API for query-driven retrieval and generation workflows.
-
-# Key Capabilities
-
-• Token-aware context construction for efficient LLM usage  
-• Modular ingestion and retrieval pipelines  
-• Pluggable embedding and model providers  
-• Persistent semantic indexing for large document corpora  
-• Architecture designed for observability and scaling
-
----
-
-# Current Milestone
-
-## Milestone 1 — Document Ingestion & Semantic Retrieval
-
-The first milestone implements the foundational components required to convert raw documents into semantically searchable knowledge.
-
-### Document Parsing
-
-File: src/context_engine/ingestion/parser.py
-
-Responsible for converting raw documents into structured `Document` objects.
-
-Supports ingestion of text-based documents while preserving metadata such as:
-
-- document id
-- file path
-- content type
-- ingestion timestamp
-
----
-
-### Token-Aware Chunking
-
-File: src/context_engine/ingestion/chunker.py
-
-Large documents are split into overlapping chunks to ensure important context is preserved across chunk boundaries.
-
-Key features:
-
-- token-based chunk sizing
-- configurable overlap
-- metadata tracking per chunk
-- compatibility with LLM token limits
-
----
-
-### Corpus Ingestion Pipeline
-
-Script: scripts/ingest_corpus.py
-
-Processes a corpus of documents by:
-
-1. discovering files
-2. parsing documents
-3. chunking content
-4. generating chunk metadata
-
-Example output:
-
-Document: sample_architecture
-chunks: 2
-Document: sample_policy
-chunks: 2
-Total documents: 2
-Total chunks: 4
-
-
----
-
-### Embedding Generation
-
-File: src/context_engine/serving/embedding_client.py
-
-Generates vector embeddings for document chunks using:
-`text-embedding-3-small`
-
-
-This converts natural language text into numerical vectors that capture semantic meaning.
-
----
-
-### Vector Storage
-
-File: src/context_engine/memory/semantic_store.py
-
-
-Embeddings are stored in a persistent Chroma vector database.
-
-Capabilities:
-
-- semantic similarity search
-- chunk metadata storage
-- persistent local in dex
-
----
-
-### Semantic Retrieval
-
-File:src/context_engine/retrieval/semantic_retriever.py
-
-Retrieves the most relevant document chunks for a user query.
-
-Uses vector similarity search to identify semantically related content.
-
----
-
-### Context Builder
-
-File: src/context_engine/orchestration/context_builder.py
-
-
-Constructs LLM-ready context windows while respecting token limits.
+File:
+src/context_engine/orchestration/context_builder.py
 
 Responsibilities:
+token counting
+context packing
+prioritizing highest relevance chunks
+reserving tokens for model responses
 
-- token counting
-- context window packing
-- prioritizing highest relevance chunks
-- reserving tokens for LLM responses
+**Answer Pipeline**
+Coordinates retrieval and generation.
+
+File:
+src/context_engine/orchestration/answer_pipeline.py
+
+Responsibilities:
+semantic retrieval
+context construction
+prompt assembly
+LLM inference
+latency instrumentation
+
+**Serving Layer**
+Provides model interaction interfaces.
+
+Files:
+src/context_engine/serving/embedding_client.py
+src/context_engine/serving/llm_client.py
+
+**API Layer**
+Exposes the system as a service.
+
+File: src/context_engine/api/main.py
+
+Endpoints:
+GET  /health
+POST /query
+
+**Observability**
+Instrumentation for debugging and performance analysis.
+
+Files:
+src/context_engine/observability/logging.py
+src/context_engine/observability/timing.py
+
+Captured metrics include:
+- retrieval latency
+- context construction latency
+- generation latency
+- total request latency
+
+### Evaluation
+A lightweight evaluation harness measures answer quality for retrieval queries.
+
+File:
+src/context_engine/evaluation/eval_runner.py
+
+Run evaluation:
+PYTHONPATH=src python src/context_engine/evaluation/eval_runner.py
+
+Example output:
+Query: What does the context engine do?
+Score: 0.33
+
+Query: What happens during ingestion?
+Score: 1.0
+
+Query: How are documents retrieved?
+Score: 1.0
+
+Average score: 0.78
+
+This allows developers to detect regressions when modifying the retrieval or generation pipeline.
 
 ---
 
-# Repository Structure
+## Repository Structure
 
 src/context_engine/
 
@@ -180,6 +255,7 @@ src/context_engine/
     orchestration/    Context construction and prompt assembly
     serving/          Embedding and LLM clients
     observability/    Logging and timing instrumentation
+    evaluation/       Evaluation harness
     api/              Service interface
 
 scripts/
@@ -190,92 +266,56 @@ tests/
 
     Unit and integration tests for core pipeline components
 
-# Upcoming Milestones
+# System Milestones
 
-## Milestone 2 — Retrieval-Augmented Generation
-
-Planned additions:
-
-- LLM response generation
-- prompt construction
-- retrieval + generation orchestration
-- answer pipeline implementation
-
-
-## Milestone 3 — API Serving Layer
-
-Expose the context engine as a service.
-
-Planned features:
-
-- FastAPI server
-- `/query` endpoint
-- structured response objects
-- streaming responses
-
-## Milestone 4 — Observability
-
-Production systems require deep visibility into model behavior.
-
-Planned features:
-
-- latency metrics
-- retrieval diagnostics
-- token usage monitoring
-- query tracing
-
-## Milestone 5 — Production Optimizations
-
-Potential improvements:
-
-- hybrid retrieval (BM25 + vector)
-- document reranking
-- caching layers
-- distributed ingestion pipelines
-
-# Motivation
-
-Large language models operate under strict context window constraints and cannot directly reason over large knowledge corpora.
-
-Production AI systems address this limitation by introducing retrieval layers that dynamically assemble relevant context at inference time.
-
-This project explores the core architectural patterns behind these systems, including:
-
-• transforming unstructured documents into semantic embeddings  
-• retrieving relevant knowledge through vector similarity search  
-• assembling context windows under strict token constraints  
-
-These patterns underpin many modern AI platforms including:
-
-• enterprise knowledge assistants  
-• document intelligence systems  
-• research copilots  
-• domain-specific AI agents
-
-
-# Development Roadmap
-
-The project is being built incrementally to mirror how production AI systems evolve.
-
-### Stage 1 — Retrieval Infrastructure (Complete)
+## Milestone 1 — Document Ingestion & Semantic Retrieval (Complete)
 
 Document ingestion and semantic retrieval pipeline.
 
-### Stage 2 — Generation Orchestration (In Progress)
+Includes:
+document parsing
+token-aware chunking
+embedding generation
+vector storage
+semantic retrieval
+
+## Milestone 2 — Retrieval-Augmented Generation (Complete)
 
 Integration of retrieval results with LLM inference.
+Includes:
+context construction
+prompt assembly
+answer pipeline
 
-### Stage 3 — Service Layer
 
-Expose the engine as an API service.
+## Milestone 3 — API Serving Layer (Complete)
 
-### Stage 4 — Observability & Diagnostics
+Expose the context engine as a service.
 
-Add tracing, retrieval diagnostics, and token accounting.
+Includes:
+FastAPI server
+/query endpoint
+configurable retrieval parameters
+structured response objects
 
-### Stage 5 — Production Optimizations
+## Milestone 4 — Observability (Complete)
 
-Hybrid retrieval, reranking, and distributed ingestion.
+Instrumentation for production diagnostics.
+
+Includes:
+latency metrics
+retrieval diagnostics
+token usage monitoring
+query tracing
+
+## Milestone 5 — Evaluation (Complete)
+
+Evaluation harness for measuring retrieval and answer quality.
+
+Includes:
+automated evaluation queries
+keyword scoring
+regression detection
 
 # License
 MIT License
