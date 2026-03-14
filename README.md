@@ -308,6 +308,5 @@ Add tracing, retrieval diagnostics, and token accounting.
 Hybrid retrieval, reranking, and distributed ingestion.
 
 # License
----
 MIT License
 Marco Punio — 2026
