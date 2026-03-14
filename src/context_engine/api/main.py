@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
-from typing import Any, Dict, Optional
+from typing import Optional
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
@@ -15,17 +15,6 @@ pipeline: Optional[AnswerPipeline] = None
 class QueryRequest(BaseModel):
     query: str = Field(..., description="User query to answer")
     top_k: int = Field(default=5, ge=1, le=25, description="Number of chunks to retrieve")
-    max_context_tokens: Optional[int] = Field(
-        default=None,
-        ge=1,
-        description="Optional context token budget override",
-    )
-
-
-class QueryResponse(BaseModel):
-    query: str
-    answer: str
-    metadata: Dict[str, Any] = Field(default_factory=dict)
 
 
 @asynccontextmanager
@@ -45,39 +34,17 @@ app = FastAPI(
 
 
 @app.get("/health")
-def health() -> Dict[str, str]:
+def health():
     return {"status": "ok"}
 
 
-@app.post("/query", response_model=QueryResponse)
-def query(request: QueryRequest) -> QueryResponse:
+@app.post("/query")
+def query(request: QueryRequest):
     if pipeline is None:
         raise HTTPException(status_code=503, detail="Pipeline is not initialized.")
 
     try:
-        result = pipeline.answer(request.query)
-
-        if isinstance(result, str):
-            return QueryResponse(
-                query=request.query,
-                answer=result,
-                metadata={},
-            )
-
-        if isinstance(result, dict):
-            return QueryResponse(
-                query=request.query,
-                answer=result.get("answer", ""),
-                metadata={k: v for k, v in result.items() if k != "answer"},
-            )
-
-        raise HTTPException(
-            status_code=500,
-            detail="Unexpected pipeline response format.",
-        )
-
-    except HTTPException:
-        raise
+        return pipeline.answer(request.query, top_k=request.top_k)
     except Exception as exc:
         raise HTTPException(
             status_code=500,
