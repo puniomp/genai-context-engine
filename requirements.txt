@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+pydantic
+python-dotenv
+tiktoken
+chromadb
+openai
+pypdf
+pytest
+pyyaml
